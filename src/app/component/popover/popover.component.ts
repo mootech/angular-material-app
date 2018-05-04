@@ -3,45 +3,68 @@
  * Copyright Stbui All Rights Reserved.
  */
 
-import { Component, Input, Output, EventEmitter, HostListener, ElementRef } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  HostListener,
+  ElementRef,
+  ViewChild,
+  TemplateRef,
+  AfterContentInit,
+  ContentChildren
+} from '@angular/core';
+import { FocusTrap, FocusTrapFactory } from '@angular/cdk/a11y';
 
 @Component({
+  moduleId: module.id,
   selector: 'stbui-popover',
   templateUrl: './popover.component.html',
   styleUrls: ['./popover.component.scss'],
   exportAs: 'stbuiPopover'
 })
-export class PopoverComponent {
-
+export class PopoverComponent implements AfterContentInit {
   @Input() overlay: boolean = false;
   @Input() overlayOpacity: number = 0.01;
   @Input() overlayColor: string = '#000';
-  @Input() targetOrigin = {vertical: 'top', horizontal: 'left'};
-  @Input() anchorOrigin = {vertical: 'bottom', horizontal: 'left'};
+  @Input() targetOrigin = { vertical: 'top', horizontal: 'left' };
+  @Input() anchorOrigin = { vertical: 'bottom', horizontal: 'left' };
   @Input() autoPosition = true;
   @Input() open = false;
-
+  
   @Output() close = new EventEmitter();
   @Output() show = new EventEmitter();
   @Output() hide = new EventEmitter();
+  
+  @ViewChild(TemplateRef) templateRef: TemplateRef<any>;
+  @ViewChild('focusTrapElement')
+  private _focusTrapElement: ElementRef;
 
   _popoverOpen: boolean = false;
   trigger;
 
-
-  @HostListener('document:click', ['$event', '$event.target']) onClick(event: MouseEvent, targetElement: HTMLElement) {
+  @HostListener('document:click', ['$event', '$event.target'])
+  onClick(event: MouseEvent, targetElement: HTMLElement) {
     if (!targetElement || !this.trigger) {
       return;
     }
 
     const clickedInset = this.trigger.contains(targetElement);
-    const clickedInside = this._elementRef.nativeElement.contains(targetElement);
+    const clickedInside = this._elementRef.nativeElement.contains(
+      targetElement
+    );
     if (!clickedInside && !clickedInset) {
       this.closePopover();
     }
   }
 
-  constructor(private _elementRef: ElementRef) {
+  constructor(
+    private _elementRef: ElementRef,
+    private focusTrapFactory: FocusTrapFactory
+  ) {}
+
+  ngAfterContentInit() {
   }
 
   getAnchorPosition(el) {
@@ -59,8 +82,8 @@ export class PopoverComponent {
 
     a.right = rect.right || a.left + a.width;
     a.bottom = rect.bottom || a.top + a.height;
-    a.middle = a.left + ((a.right - a.left) / 2);
-    a.center = a.top + ((a.bottom - a.top) / 2);
+    a.middle = a.left + (a.right - a.left) / 2;
+    a.center = a.top + (a.bottom - a.top) / 2;
 
     return a;
   }
@@ -87,7 +110,7 @@ export class PopoverComponent {
   }
 
   setStyle() {
-    const {targetOrigin, anchorOrigin} = this;
+    const { targetOrigin, anchorOrigin } = this;
     const anchor = this.getAnchorPosition(this.trigger);
     const target = this.getTargetPosition(this.trigger);
     const targetPosition = {
@@ -112,5 +135,10 @@ export class PopoverComponent {
 
   toggle() {
     this._popoverOpen = !this._popoverOpen;
+  }
+
+
+  private _trapFocus() {
+    this.focusTrapFactory.create(this._focusTrapElement.nativeElement)
   }
 }
